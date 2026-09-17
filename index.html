@@ -4,7 +4,118 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nombre Apellido</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem("tema-perfil");
+      if (!t && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        t = "oscuro";
+      }
+      document.documentElement.setAttribute(
+        "data-theme",
+        t === "oscuro" ? "oscuro" : "claro"
+      );
+    })();
+  </script>
   <style>
+    :root {
+      --fondo: #f6f8fa;
+      --fondo-tarjeta: #ffffff;
+      --texto: #1f2328;
+      --texto-suave: #656d76;
+      --titulo: #1f6feb;
+      --borde: #d0d7de;
+      --enlace: #0969da;
+      --enlace-hover: #0550ae;
+    }
+
+    html[data-theme="oscuro"] {
+      --fondo: #0d1117;
+      --fondo-tarjeta: #161b22;
+      --texto: #e6edf3;
+      --texto-suave: #8b949e;
+      --titulo: #58a6ff;
+      --borde: #30363d;
+      --enlace: #58a6ff;
+      --enlace-hover: #79c0ff;
+    }
+
+    html {
+      color-scheme: light;
+    }
+
+    html[data-theme="oscuro"] {
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      background: var(--fondo);
+      color: var(--texto);
+      font-family: system-ui, sans-serif;
+      line-height: 1.6;
+    }
+
+    header,
+    main,
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    header > div {
+      flex: 1 1 16rem;
+      min-width: 0;
+    }
+
+    .titulo {
+      color: var(--titulo);
+      margin: 0 0 0.35rem;
+    }
+
+    header p,
+    footer {
+      color: var(--texto-suave);
+    }
+
+    section {
+      background: var(--fondo-tarjeta);
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    a {
+      color: var(--enlace);
+    }
+
+    a:hover {
+      color: var(--enlace-hover);
+    }
+
+    #cambiar-tema {
+      background: var(--fondo-tarjeta);
+      color: var(--texto);
+      border: 1px solid var(--borde);
+      border-radius: 8px;
+      padding: 0.45rem 0.8rem;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    #cambiar-tema:hover {
+      border-color: var(--titulo);
+    }
+    
     *,
     *::before,
     *::after {
@@ -122,8 +233,13 @@
 </head>
 <body>
   <header>
-    <h1 class="titulo">Nombre Apellido · Ingeniería Informática</h1>
-    <p>Estudiante de Ingeniería Informática · Universidad Ricardo Palma</p>
+    <div>
+      <h1 class="titulo">Nombre Apellido · Ingeniería Informática</h1>
+      <p>Estudiante de Ingeniería Informática · Universidad Ricardo Palma</p>
+    </div>
+    <button id="cambiar-tema" type="button" aria-pressed="false">
+      Activar modo oscuro
+    </button>
   </header>
   <main>
     <!-- las secciones van aquí -->
@@ -225,5 +341,31 @@
   <footer>
     <p>Hecho con Git y GitHub Pages · IF-1116 · 2026-II</p>
   </footer>
+  <script>
+    (function () {
+      var boton = document.getElementById("cambiar-tema");
+      var clave = "tema-perfil";
+
+      function aplicar(tema) {
+        var oscuro = tema === "oscuro";
+        document.documentElement.setAttribute("data-theme", oscuro ? "oscuro" : "claro");
+        boton.setAttribute("aria-pressed", oscuro ? "true" : "false");
+        boton.textContent = oscuro ? "Activar modo claro" : "Activar modo oscuro";
+      }
+
+      var guardado = localStorage.getItem(clave);
+      var inicial =
+        guardado ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro");
+      aplicar(inicial);
+
+      boton.addEventListener("click", function () {
+        var actual = document.documentElement.getAttribute("data-theme");
+        var siguiente = actual === "oscuro" ? "claro" : "oscuro";
+        localStorage.setItem(clave, siguiente);
+        aplicar(siguiente);
+      });
+    })();
+  </script>
 </body>
 </html>
