@@ -4,7 +4,122 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nombre Apellido</title>
-  <style>.titulo { color: #1f6feb; }</style>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0 auto;
+      max-width: 42rem;
+      padding: 1rem;
+      font-family: system-ui, sans-serif;
+      font-size: 1.125rem;
+      line-height: 1.7;
+      color: #1f2328;
+      overflow-x: hidden;
+    }
+
+    .titulo {
+      color: #1f6feb;
+      font-size: 1.45rem;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+      margin: 0 0 0.4rem;
+    }
+
+    header p,
+    footer {
+      color: #656d76;
+      font-size: 1rem;
+    }
+
+    section {
+      margin: 1.25rem 0;
+    }
+
+    #sobre-mi {
+      white-space: pre-line;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      margin: 0 0 0.6rem;
+    }
+
+    #habilidades ul,
+    #proyectos ul,
+    #contacto ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #habilidades ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    #habilidades li {
+      background: #eef4ff;
+      border-radius: 999px;
+      padding: 0.4rem 0.8rem;
+      font-size: 1rem;
+    }
+
+    #proyectos li {
+      margin-bottom: 1rem;
+    }
+
+    #proyectos p {
+      margin: 0.25rem 0 0;
+    }
+
+    #contacto a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0.25rem 0;
+    }
+
+    img,
+    a {
+      max-width: 100%;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 1rem 0.9rem 2rem;
+        font-size: 1.125rem;
+      }
+
+      .titulo {
+        font-size: 1.3rem;
+      }
+
+      #habilidades li,
+      #contacto a {
+        min-height: 44px;
+      }
+    }
+
+    @media (min-width: 641px) {
+      body {
+        padding: 2rem 1.5rem;
+      }
+
+      .titulo {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
