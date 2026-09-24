@@ -193,3 +193,27 @@ El primero tiene que fallar. El segundo tiene que devolver la dirección de `db`
 - **Qué no me funcionó:** Quedaron 44 altas sin versión corregida en Trixie. No las puedo cerrar desde el Dockerfile. Cero vulnerabilidades no es una meta realista: la imagen hereda el sistema base.
 
 **CVE-2023-45853.** Es un desbordamiento de entero en `zipOpenNewFileInZip4_64` de zlib (código de minizip), severidad crítica. En Bookworm afecta a `zlib1g` `1:1.2.13.dfsg-1` y Trivy no indica versión parcheada. No la parcheé a mano: al pasar la base a Trixie el hallazgo desaparece del segundo escaneo.
+
+### Reto 6: Cero secretos… y aun así arranca solo
+
+- **Decisión:** La contraseña no está en Git ni en ninguna capa. `.env` está en `.gitignore` y `.env.example` deja `DB_PASSWORD` vacío. Compose la inyecta al arrancar con `${DB_PASSWORD:?}`. En un Codespace nuevo, `postCreateCommand` corre una sola vez: copia el ejemplo y escribe una contraseña aleatoria en `.env`, que no se commitea. `postStartCommand` corre en cada arranque y hace `docker compose up -d --build --wait`.
+- **Alternativas que evalué:**
+  - `ENV DB_PASSWORD=…` en el Dockerfile. Pro: la imagen arranca sin archivo. Contra: el valor queda en una capa y `docker history` lo muestra. Es una fuga.
+  - Un secreto de Codespaces. Pro: no está en el repo. Contra: el secreto es de quien crea el Codespace. Quien califica abre el repo con su cuenta y no tiene el mío, así que el stack no arranca.
+  - Dejar `DB_PASSWORD` vacío en el ejemplo y pedir que alguien lo escriba a mano. Pro: no hay secreto en el repo. Contra: un Codespace nuevo no tiene `.env` y el criterio B3 exige que arranque solo.
+- **Por qué elegí esta:** La contraseña de desarrollo se genera en el entorno, fuera de Git y fuera de la imagen. No es un secreto de producción: solo vive en ese Codespace para que Postgres acepte conexiones. En producción la credencial la pondría el entorno de despliegue, no el repositorio.
+- **Fuentes consultadas:**
+  - https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/
+  - https://docs.docker.com/reference/compose-file/services/#env_file
+  - https://docs.docker.com/reference/dockerfile/#env
+  - https://docs.github.com/en/codespaces/managing-codespaces-for-your-organization/managing-development-environment-secrets-for-your-repository-or-organization
+  - https://containers.dev/implementors/json_reference/#lifecycle-scripts
+- **Cómo lo verifiqué:** El historial de `.env` está vacío (solo está versionado `.env.example`):
+
+```
+git log --all --full-history -- .env
+```
+
+`docker history --no-trunc` de `libro-api:despues`, `libro-web:secreto` y `libro-db:secreto`, filtrado por `password`, `secret` y `DB_PASSWORD`, no devolvió ninguna capa.
+
+- **Qué no me funcionó:** Confundir `env_file` con una capa de la imagen. Compose lee `.env` al crear el contenedor y mete `POSTGRES_PASSWORD` en el entorno del proceso. Eso no se escribe en el Dockerfile ni aparece en `docker history`. Si lo hubiera puesto en `ENV`, el secreto quedaría para siempre en la imagen.
