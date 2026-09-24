@@ -1,0 +1,80 @@
+# Libro de visitas: nginx (web) -> API -> Postgres.
+# La contraseña no está aquí: entra por .env en tiempo de ejecución.
+
+name: libro-de-visitas
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    environment:
+      PORT: ${PORT:-3000}
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - frontal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build: ./api
+    env_file: .env
+    environment:
+      DB_HOST: db
+    expose:
+      - "3000"
+    volumes:
+      - .:/workspace:cached
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - frontal
+      - datos
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('PORT','3000'))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  db:
+    build: ./db
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Definir DB_NAME en .env}
+      POSTGRES_USER: ${DB_USER:?Definir DB_USER en .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Definir DB_PASSWORD en .env}
+    volumes:
+      - datos:/var/lib/postgresql/data
+    networks:
+      - datos
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+networks:
+  frontal:
+  datos:
+
+volumes:
+  datos:
