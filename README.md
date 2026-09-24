@@ -28,7 +28,7 @@ En un Codespace nuevo no hace falta copiar `.env` ni escribir comandos. `.devcon
 
 - **Tres servicios.** `web` sirve el HTML de la raíz, `api` corre gunicorn y `db` es Postgres 16. El HTML sigue en la raíz porque GitHub Pages lo necesita ahí; la imagen de nginx solo lo copia.
 - **Mismo origen.** El navegador llama a `/api`. nginx reenvía esa ruta al servicio `api` usando `PORT` de `.env`. No hay URL ni puerto en `libro-de-visitas.js`.
-- **Dos redes.** `frontal` une web y api. `datos` une api y db. Postgres no está en `frontal` ni tiene `ports`: desde el host no se alcanza.
+- **Dos redes.** `frontal` une web y api. `datos` une api y db. `web` no está en `datos`, así que el nombre `db` no resuelve ahí. `api` usa `expose` y `db` no tiene `ports`: hacia el host solo publica `web`.
 - **Credenciales.** La contraseña vive solo en `.env` (gitignored) y entra a Postgres como `POSTGRES_PASSWORD` al arrancar. `.env.example` se commitea con `DB_PASSWORD` vacío. Los `.dockerignore` dejan `.env` fuera de las imágenes.
 - **Datos.** El volumen `datos` guarda `/var/lib/postgresql/data`. `docker compose down` no lo borra; hace falta `docker compose down -v` para empezar de cero. Los SQL de `db/init/` corren solo con el volumen vacío.
 - **Salud.** `db` no queda sano solo con `pg_isready`: también consulta la tabla `mensajes`. `api` pide `GET /api/health` con Python (la imagen no tiene curl) y ese endpoint falla si la tabla no existe. `web` pide el mismo health a través del proxy. Cada uno espera al anterior con `condition: service_healthy`.
@@ -142,3 +142,27 @@ for s in web api db; do docker compose exec $s whoami; done
 La salida esperada es `nginx`, `app` y `postgres`.
 
 - **Qué no me funcionó:** `whoami` en Postgres no refleja el `gosu` del entrypoint: hay que fijar `user`. En nginx no basta con `USER nginx` si el pid sigue en `/var/run` o el listen sigue en 80. Y un `entrypoint.sh` con CRLF hace que `sh` rechace `set -e`; `.gitattributes` fuerza LF en los `.sh`.
+
+### Reto 4: Red segmentada
+
+- **Decisión:** Hay dos redes de usuario. `web` solo está en `frontal`. `db` solo está en `datos`. `api` está en las dos, así que es el único puente. Hacia el host, `web` publica `8080:8080`. `api` declara `expose: 3000` y `db` no tiene `ports`.
+- **Alternativas que evalué:**
+  - Una sola red para los tres. Pro: los nombres se resuelven sin pensar. Contra: si comprometen nginx, el contenedor puede abrir una conexión a Postgres por el nombre `db`.
+  - Publicar la API con `ports` para depurarla desde el host. Pro: se puede llamar a `:3000` sin pasar por nginx. Contra: el criterio pide que solo `web` salga al host; `expose` deja el puerto visible en la red de Compose y no en la máquina.
+  - Poner `db` también en `frontal` y fiarse de que no tiene `ports`. Pro: el host no llega a Postgres. Contra: `web` sí llega, porque comparte la red y el DNS interno le resuelve el nombre.
+- **Por qué elegí esta:** El DNS de Compose solo resuelve servicios que comparten red. Sin una red en común, `web` no ve `db` aunque adivine la IP. `api` necesita ver a los dos porque es quien habla con la base y quien responde a nginx. Mínimo privilegio: el servicio expuesto a Internet no tiene ruta hacia los datos.
+- **Fuentes consultadas:**
+  - https://docs.docker.com/compose/how-tos/networking/
+  - https://docs.docker.com/reference/compose-file/networks/
+  - https://docs.docker.com/reference/compose-file/services/#ports
+  - https://docs.docker.com/reference/compose-file/services/#expose
+- **Cómo lo verifiqué:** La topología ya está en `compose.yaml`. El motor de Rancher Desktop sigue sin responder, así que no pude ejecutar los comandos. Cuando vuelva, la evidencia es:
+
+```
+docker compose exec web getent hosts db
+docker compose exec api getent hosts db
+```
+
+El primero tiene que fallar. El segundo tiene que devolver la dirección de `db`. `docker compose ps` debe mostrar puerto publicado solo en `web`.
+
+- **Qué no me funcionó:** `ports` y `expose` no son lo mismo, pero ninguno separa redes. Publicar o no el puerto de Postgres no impide que otro contenedor de la misma red lo alcance por el nombre. La barrera es no compartir red.
