@@ -32,7 +32,7 @@ En un Codespace nuevo no hace falta copiar `.env` ni escribir comandos. `.devcon
 - **Credenciales.** La contraseña vive solo en `.env` (gitignored) y entra a Postgres como `POSTGRES_PASSWORD` al arrancar. `.env.example` se commitea con `DB_PASSWORD` vacío. Los `.dockerignore` dejan `.env` fuera de las imágenes.
 - **Datos.** El volumen `datos` guarda `/var/lib/postgresql/data`. `docker compose down` no lo borra; hace falta `docker compose down -v` para empezar de cero. Los SQL de `db/init/` corren solo con el volumen vacío.
 - **Salud.** `db` no queda sano solo con `pg_isready`: también consulta la tabla `mensajes`. `api` pide `GET /api/health` con Python (la imagen no tiene curl) y ese endpoint falla si la tabla no existe. `web` pide el mismo health a través del proxy. Cada uno espera al anterior con `condition: service_healthy`.
-- **Proceso de la API.** La imagen final es `python:3.12-slim-bookworm` en dos etapas: el builder instala el venv y la etapa final solo copia ese venv y `app.py`. Arranca gunicorn con el usuario `app`. El código de ejecución es `/app`. El editor del Codespace es un contenedor aparte; el volumen `.:/workspace` solo monta el repo dentro de `api`.
+- **Proceso de la API.** La imagen final es `python:3.12-slim-trixie` en dos etapas: el builder instala el venv y la etapa final solo copia ese venv y `app.py`. Arranca gunicorn con el usuario `app`. El código de ejecución es `/app`. El editor del Codespace es un contenedor aparte; el volumen `.:/workspace` solo monta el repo dentro de `api`.
 
 ## Bitácora de decisiones (LAB-02)
 
@@ -166,3 +166,30 @@ docker compose exec api getent hosts db
 El primero tiene que fallar. El segundo tiene que devolver la dirección de `db`. `docker compose ps` debe mostrar puerto publicado solo en `web`.
 
 - **Qué no me funcionó:** `ports` y `expose` no son lo mismo, pero ninguno separa redes. Publicar o no el puerto de Postgres no impide que otro contenedor de la misma red lo alcance por el nombre. La barrera es no compartir red.
+
+### Reto 5: Escaneo de vulnerabilidades
+
+- **Decisión:** Escaneé `libro-api:antes` (base `python:3.12-slim-bookworm`) con Trivy 0.74.0 y pasé las dos etapas a `python:3.12-slim-trixie`. Volví a escanear `libro-api:despues`.
+- **Alternativas que evalué:**
+  - `apt-get upgrade` sobre Bookworm. Pro: aplica parches sin cambiar de distribución. Contra: Trivy no publica `FixedVersion` para ninguna crítica ni alta de esa imagen; el upgrade no las baja.
+  - Alpine. Pro: otra libc y menos paquetes Debian. Contra: `psycopg[binary]` es una rueda glibc; en musl hay que compilar.
+  - Buscar cero hallazgos. Pro: suena a meta. Contra: la base siempre hereda CVEs sin parche. La meta es bajar lo grave y saber qué se acepta.
+- **Por qué elegí esta:** Debian 13 ya no reporta las cinco críticas de Bookworm y baja las altas de 55 a 44. La aplicación sigue en glibc, así que la rueda de psycopg no cambia.
+- **Fuentes consultadas:**
+  - https://trivy.dev/docs/latest/
+  - https://trivy.dev/docs/latest/scanner/vulnerability/
+  - https://nvd.nist.gov/vuln/detail/CVE-2023-45853
+  - https://hub.docker.com/_/python
+- **Cómo lo verifiqué:** `trivy image --scanners vuln` sobre las dos imágenes.
+
+| Severidad | Antes (Bookworm) | Después (Trixie) |
+| --- | --- | --- |
+| CRITICAL | 5 | 0 |
+| HIGH | 55 | 44 |
+| MEDIUM | 104 | 53 |
+| LOW | 103 | 58 |
+| UNKNOWN | 2 | 2 |
+
+- **Qué no me funcionó:** Quedaron 44 altas sin versión corregida en Trixie. No las puedo cerrar desde el Dockerfile. Cero vulnerabilidades no es una meta realista: la imagen hereda el sistema base.
+
+**CVE-2023-45853.** Es un desbordamiento de entero en `zipOpenNewFileInZip4_64` de zlib (código de minizip), severidad crítica. En Bookworm afecta a `zlib1g` `1:1.2.13.dfsg-1` y Trivy no indica versión parcheada. No la parcheé a mano: al pasar la base a Trixie el hallazgo desaparece del segundo escaneo.

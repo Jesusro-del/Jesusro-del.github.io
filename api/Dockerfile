@@ -1,7 +1,7 @@
 # API del libro de visitas.
 # La imagen no lleva contraseñas: gunicorn lee PORT y la app lee DB_* al arrancar.
 # El builder instala dependencias en un venv. Esa etapa no llega a la imagen final.
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-trixie AS builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip uninstall -y pip setuptools wheel
 
 # Runtime: intérprete slim, el venv y app.py. Sin pip, ni compiladores, ni caché.
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-trixie
 
 WORKDIR /app
 
