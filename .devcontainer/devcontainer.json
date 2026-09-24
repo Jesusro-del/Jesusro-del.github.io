@@ -1,9 +1,9 @@
 {
   "name": "Libro de visitas",
-  "dockerComposeFile": "../compose.yaml",
-  "service": "api",
-  "workspaceFolder": "/workspace",
-  "overrideCommand": false,
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
   "forwardPorts": [8080],
   "portsAttributes": {
     "8080": {
@@ -11,11 +11,8 @@
       "onAutoForward": "openBrowser"
     }
   },
-  "shutdownAction": "stopCompose",
-  "remoteUser": "app",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {}
-  },
+  "postCreateCommand": "if [ ! -f .env ]; then cp .env.example .env && pw=$(od -An -N16 -tx1 /dev/urandom | tr -d '[:space:]') && sed -i \"s/^DB_PASSWORD=.*/DB_PASSWORD=${pw}/\" .env; fi",
+  "postStartCommand": "docker compose up -d --build --wait",
   "customizations": {
     "vscode": {
       "extensions": [
