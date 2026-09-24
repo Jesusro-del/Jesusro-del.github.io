@@ -119,3 +119,26 @@ web healthy
 ```
 
 - **Qué no me funcionó:** `pg_isready` solo no basta. El entrypoint oficial de Postgres acepta conexiones mientras todavía corre los SQL de `docker-entrypoint-initdb.d/`, así que la API podía arrancar antes de que existiera `mensajes`. El healthcheck de la base ahora exige esa tabla.
+
+### Reto 3: Nadie es root
+
+- **Decisión:** Los tres servicios ejecutan `whoami` como un usuario sin privilegios. `api` ya era `app`. `web` escucha en 8080 (el host sigue publicando `8080:8080`) y corre como `nginx`. `db` fija `user: postgres`, que es el usuario del proceso real.
+- **Alternativas que evalué:**
+  - Dejar nginx como root para poder usar el puerto 80. Pro: es lo que hace la imagen oficial, porque los puertos por debajo de 1024 solo los puede abrir root. Contra: `docker compose exec web whoami` devuelve `root`.
+  - Darle a nginx la capability `NET_BIND_SERVICE` y seguir en el puerto 80. Pro: el proceso no es root y conserva el puerto privilegiado. Contra: sigue siendo un privilegio extra; cambiar el listen a 8080 no lo necesita.
+  - Confiar en que Postgres "ya no es root" porque su entrypoint hace `gosu postgres`. Pro: el proceso de la base sí corre como `postgres`. Contra: el usuario del contenedor sigue siendo root, y `docker compose exec db whoami` mira ese usuario, no el de PID 1.
+- **Por qué elegí esta:** El criterio pide el usuario del contenedor, no el del proceso interno. En nginx, subir el listen a 8080 evita el puerto privilegiado y permite `USER nginx` después de mover el pid a `/tmp` y dar permiso sobre la caché y `conf.d`. En Postgres, `user: postgres` alinea el contenedor con el usuario que la imagen oficial ya usa para el servidor. La API no cambia: su Dockerfile tiene `USER app`.
+- **Fuentes consultadas:**
+  - https://hub.docker.com/_/nginx
+  - https://github.com/nginxinc/docker-nginx-unprivileged
+  - https://hub.docker.com/_/postgres
+  - https://docs.docker.com/reference/compose-file/services/#user
+- **Cómo lo verifiqué:** `db` arrancó y pasó el healthcheck con `user: postgres`. El primer arranque de `api` murió por finales de línea CRLF en `entrypoint.sh` (`set: Illegal option -`). Al reconstruir, el motor de Rancher Desktop dejó de responder y no pude completar el bucle. El comando del criterio, cuando el motor vuelva, es:
+
+```
+for s in web api db; do docker compose exec $s whoami; done
+```
+
+La salida esperada es `nginx`, `app` y `postgres`.
+
+- **Qué no me funcionó:** `whoami` en Postgres no refleja el `gosu` del entrypoint: hay que fijar `user`. En nginx no basta con `USER nginx` si el pid sigue en `/var/run` o el listen sigue en 80. Y un `entrypoint.sh` con CRLF hace que `sh` rechace `set -e`; `.gitattributes` fuerza LF en los `.sh`.
