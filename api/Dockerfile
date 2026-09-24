@@ -1,14 +1,28 @@
 # API del libro de visitas.
 # La imagen no lleva contraseñas: gunicorn lee PORT y la app lee DB_* al arrancar.
-FROM python:3.12-slim-bookworm
+# El builder instala dependencias en un venv. Esa etapa no llega a la imagen final.
+FROM python:3.12-slim-bookworm AS builder
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    && useradd --create-home --uid 1000 --shell /usr/sbin/nologin app
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt \
+    && /opt/venv/bin/pip uninstall -y pip setuptools wheel
 
+# Runtime: intérprete slim, el venv y app.py. Sin pip, ni compiladores, ni caché.
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app
+
+RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin app \
+    && python -m pip uninstall -y pip setuptools wheel \
+    && rm -rf /root/.cache /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
 COPY --chown=app:app app.py .
+
+ENV PATH="/opt/venv/bin:$PATH"
 
 USER app
 
