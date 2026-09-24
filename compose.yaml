@@ -11,7 +11,8 @@ services:
     environment:
       PORT: ${PORT:-3000}
     ports:
-      - "8080:80"
+      - "8080:8080"
+    user: nginx
     depends_on:
       api:
         condition: service_healthy
@@ -19,7 +20,7 @@ services:
       - frontal
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/api/health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/health"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -56,6 +57,9 @@ services:
 
   db:
     build: ./db
+    # El entrypoint oficial baja a este usuario con gosu, pero el contenedor
+    # seguiría siendo root y `docker compose exec` devolvería root.
+    user: postgres
     environment:
       POSTGRES_DB: ${DB_NAME:?Definir DB_NAME en .env}
       POSTGRES_USER: ${DB_USER:?Definir DB_USER en .env}
