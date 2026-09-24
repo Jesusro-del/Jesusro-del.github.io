@@ -20,7 +20,8 @@ RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin app \
     && rm -rf /root/.cache /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv
-COPY --chown=app:app app.py .
+COPY --chown=app:app app.py entrypoint.sh .
+RUN chmod 755 /app/entrypoint.sh
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -31,4 +32,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
     CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('PORT','3000'))"
 
-CMD gunicorn --bind 0.0.0.0:${PORT:-3000} --workers 2 --access-logfile - --error-logfile - app:app
+CMD ["sh", "/app/entrypoint.sh"]

@@ -30,7 +30,7 @@ def health():
     # "Estoy vivo" no alcanza: si no puedo hablar con la base, no estoy sano.
     try:
         with conectar() as con:
-            con.execute("SELECT 1")
+            con.execute("SELECT 1 FROM mensajes LIMIT 0")
         return jsonify(status="ok")
     except psycopg.Error as e:
         return jsonify(status="error", detalle=str(e).strip()), 503

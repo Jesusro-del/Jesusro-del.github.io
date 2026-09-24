@@ -31,7 +31,7 @@ En un Codespace nuevo no hace falta copiar `.env` ni escribir comandos. `.devcon
 - **Dos redes.** `frontal` une web y api. `datos` une api y db. Postgres no está en `frontal` ni tiene `ports`: desde el host no se alcanza.
 - **Credenciales.** La contraseña vive solo en `.env` (gitignored) y entra a Postgres como `POSTGRES_PASSWORD` al arrancar. `.env.example` se commitea con `DB_PASSWORD` vacío. Los `.dockerignore` dejan `.env` fuera de las imágenes.
 - **Datos.** El volumen `datos` guarda `/var/lib/postgresql/data`. `docker compose down` no lo borra; hace falta `docker compose down -v` para empezar de cero. Los SQL de `db/init/` corren solo con el volumen vacío.
-- **Salud.** `db` usa `pg_isready`. `api` pide `GET /api/health`, que falla si no habla con la base. `web` pide ese mismo health a través del proxy. Cada uno espera al anterior con `condition: service_healthy`.
+- **Salud.** `db` no queda sano solo con `pg_isready`: también consulta la tabla `mensajes`. `api` pide `GET /api/health` con Python (la imagen no tiene curl) y ese endpoint falla si la tabla no existe. `web` pide el mismo health a través del proxy. Cada uno espera al anterior con `condition: service_healthy`.
 - **Proceso de la API.** La imagen final es `python:3.12-slim-bookworm` en dos etapas: el builder instala el venv y la etapa final solo copia ese venv y `app.py`. Arranca gunicorn con el usuario `app`. El código de ejecución es `/app`. El editor del Codespace es un contenedor aparte; el volumen `.:/workspace` solo monta el repo dentro de `api`.
 
 ## Bitácora de decisiones (LAB-02)
@@ -95,3 +95,27 @@ imports-ok
 ```
 
 - **Qué no me funcionó:** El primer `docker build` usó el driver `docker-container` sin `--load`: el build terminó bien, pero `docker images` no mostró la etiqueta porque la imagen se quedó en la caché de BuildKit. Había que repetir el build con `--load`. Además, la primera imagen de dos etapas seguía trayendo pip dentro del venv; desinstalarlo solo en el sistema no bastaba. Hay que quitarlo en el builder, antes de copiar `/opt/venv`.
+
+### Reto 2: Arranque ordenado
+
+- **Decisión:** `depends_on` usa `condition: service_healthy`. La base queda sana solo cuando `pg_isready` responde y `psql` puede leer `mensajes`. La API, antes de lanzar gunicorn, reintenta esa misma consulta; si Postgres aún no está, espera y no termina. El health HTTP de la API lo hace Python con `urllib`, porque la imagen mínima no trae curl.
+- **Alternativas que evalué:**
+  - `depends_on` sin `condition`. Pro: fija el orden de creación. Contra: no espera a que Postgres acepte conexiones; la API arranca durante el init y el libro falla.
+  - Un `sleep` fijo antes de gunicorn. Pro: no añade herramientas. Contra: a veces sobra y a veces no alcanza; `docker compose up --wait` no sabe si el servicio está sano.
+  - Instalar curl en la imagen de la API para el healthcheck. Pro: el chequeo HTTP es el habitual. Contra: mete un paquete en la imagen que el reto 1 acaba de adelgazar.
+- **Por qué elegí esta:** El healthcheck de Compose es lo que `--wait` y `docker compose ps` consultan. Encadenar db, luego api, luego web con `service_healthy` hace que el navegador del Codespace no se abra contra una API vacía. Reintentar en el entrypoint cubre el hueco en el que `pg_isready` ya dice que sí pero la tabla todavía no existe, sin matar el contenedor.
+- **Fuentes consultadas:**
+  - https://docs.docker.com/compose/how-tos/startup-order/
+  - https://docs.docker.com/reference/compose-file/services/#healthcheck
+  - https://docs.docker.com/reference/dockerfile/#healthcheck
+  - https://www.postgresql.org/docs/current/app-pg-isready.html
+- **Cómo lo verifiqué:** `docker compose -p reto2-arranque up -d --build --wait` terminó con código 0 y solo entonces los tres estaban healthy. En Compose 5.3 la tabla por defecto no escribe `(healthy)` en `Status`; el campo `Health` sí:
+
+```
+docker compose -p reto2-arranque ps --format "{{.Service}} {{.Health}}"
+api healthy
+db healthy
+web healthy
+```
+
+- **Qué no me funcionó:** `pg_isready` solo no basta. El entrypoint oficial de Postgres acepta conexiones mientras todavía corre los SQL de `docker-entrypoint-initdb.d/`, así que la API podía arrancar antes de que existiera `mensajes`. El healthcheck de la base ahora exige esa tabla.
