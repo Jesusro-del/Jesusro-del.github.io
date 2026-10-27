@@ -1,0 +1,60 @@
+var.location
+  Location represents region/zone for the resource.
+
+  Enter a value: 
+var.region
+  Region for the resource.
+
+  Enter a value: 
+
+Changes to Outputs:
+  ~ cluster_region = "us-central1" -> ""
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+Warning: Version constraints inside provider configuration blocks are deprecated
+
+  on k8s.tf line 2, in provider "kubernetes":
+   2:   version = "~> 1.10.0"
+
+Terraform 0.13 and earlier allowed provider version constraints inside the provider configuration block, but that is now deprecated and will be
+removed in a future version of Terraform. To silence this warning, move the provider version constraint into the required_providers block.
+var.location
+  Location represents region/zone for the resource.
+
+  Enter a value: 
+var.region
+  Region for the resource.
+
+  Enter a value: 
+
+Changes to Outputs:
+  ~ cluster_region = "us-central1" -> ""
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+Warning: Version constraints inside provider configuration blocks are deprecated
+
+  on k8s.tf line 2, in provider "kubernetes":
+   2:   version = "~> 1.10.0"
+
+Terraform 0.13 and earlier allowed provider version constraints inside the provider configuration block, but that is now deprecated and will be
+removed in a future version of Terraform. To silence this warning, move the provider version constraint into the required_providers block.
+var.location
+  Location represents region/zone for the resource.
+
+  Enter a value: 
+var.region
+  Region for the resource.
+
+  Enter a value: 
+
+Warning: Version constraints inside provider configuration blocks are deprecated
+
+  on k8s.tf line 2, in provider "kubernetes":
+   2:   version = "~> 1.10.0"
+
+Terraform 0.13 and earlier allowed provider version constraints inside the provider configuration block, but that is now deprecated and will be
+removed in a future version of Terraform. To silence this warning, move the provider version constraint into the required_providers block.

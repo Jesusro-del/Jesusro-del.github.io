@@ -1,0 +1,93 @@
+module.vpc.module.vpc.google_compute_network.network: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/global/networks/tf-vpc-953085]
+google_compute_firewall.tf-firewall: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/global/firewalls/tf-firewall]
+module.storage.google_storage_bucket.storage-bucket: Refreshing state... [id=tf-bucket-471675]
+module.instances.google_compute_instance.tf-instance-1: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/zones/us-west4-c/instances/tf-instance-1]
+module.instances.google_compute_instance.tf-instance-2: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/zones/us-west4-c/instances/tf-instance-2]
+module.vpc.module.subnets.google_compute_subnetwork.subnetwork["us-west4/subnet-01"]: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/regions/us-west4/subnetworks/subnet-01]
+module.vpc.module.subnets.google_compute_subnetwork.subnetwork["us-west4/subnet-02"]: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/regions/us-west4/subnetworks/subnet-02]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # module.instances.google_compute_instance.tf-instance-481965 will be created
+  + resource "google_compute_instance" "tf-instance-481965" {
+      + allow_stopping_for_update = true
+      + can_ip_forward            = false
+      + cpu_platform              = (known after apply)
+      + creation_timestamp        = (known after apply)
+      + current_status            = (known after apply)
+      + deletion_protection       = false
+      + effective_labels          = {
+          + "goog-terraform-provisioned" = "true"
+        }
+      + id                        = (known after apply)
+      + instance_id               = (known after apply)
+      + label_fingerprint         = (known after apply)
+      + machine_type              = "e2-standard-2"
+      + metadata_fingerprint      = (known after apply)
+      + metadata_startup_script   = <<-EOT
+            #!/bin/bash
+        EOT
+      + min_cpu_platform          = (known after apply)
+      + name                      = "tf-instance-481965"
+      + project                   = "qwiklabs-gcp-03-e91df05baf52"
+      + self_link                 = (known after apply)
+      + tags_fingerprint          = (known after apply)
+      + terraform_labels          = {
+          + "goog-terraform-provisioned" = "true"
+        }
+      + zone                      = "us-west4-c"
+
+      + boot_disk {
+          + auto_delete                = true
+          + device_name                = (known after apply)
+          + disk_encryption_key_sha256 = (known after apply)
+          + guest_os_features          = (known after apply)
+          + kms_key_self_link          = (known after apply)
+          + mode                       = "READ_WRITE"
+          + source                     = (known after apply)
+
+          + initialize_params {
+              + architecture           = (known after apply)
+              + image                  = "debian-12"
+              + labels                 = (known after apply)
+              + provisioned_iops       = (known after apply)
+              + provisioned_throughput = (known after apply)
+              + resource_policies      = (known after apply)
+              + size                   = (known after apply)
+              + snapshot               = (known after apply)
+              + type                   = (known after apply)
+            }
+        }
+
+      + confidential_instance_config (known after apply)
+
+      + guest_accelerator (known after apply)
+
+      + network_interface {
+          + internal_ipv6_prefix_length = (known after apply)
+          + ipv6_access_type            = (known after apply)
+          + ipv6_address                = (known after apply)
+          + name                        = (known after apply)
+          + network                     = "default"
+          + network_attachment          = (known after apply)
+          + network_ip                  = (known after apply)
+          + stack_type                  = (known after apply)
+          + subnetwork                  = (known after apply)
+          + subnetwork_project          = (known after apply)
+        }
+
+      + reservation_affinity (known after apply)
+
+      + scheduling (known after apply)
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
