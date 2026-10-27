@@ -1,0 +1,63 @@
+var.project
+  The name of the project in which to create the Kubernetes cluster.
+
+  Enter a value: 
+var.zone
+  The zone in which to create the Kubernetes cluster. Must match the region
+
+  Enter a value: 
+
+Planning failed. Terraform encountered an error while generating this plan.
+
+var.project
+  The name of the project in which to create the Kubernetes cluster.
+
+  Enter a value: 
+var.zone
+  The zone in which to create the Kubernetes cluster. Must match the region
+
+  Enter a value: 
+var.project
+  The name of the project in which to create the Kubernetes cluster.
+
+  Enter a value: 
+var.zone
+  The zone in which to create the Kubernetes cluster. Must match the region
+
+  Enter a value: 
+data.google_container_engine_versions.gke_versions: Reading...
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform planned the following actions, but then encountered a problem:
+
+  # google_project_service.container will be created
+  + resource "google_project_service" "container" {
+      + deletion_policy    = "DELETE"
+      + disable_on_destroy = false
+      + id                 = (known after apply)
+      + project            = "yes"
+      + service            = "container.googleapis.com"
+    }
+
+  # google_project_service.logging will be created
+  + resource "google_project_service" "logging" {
+      + deletion_policy    = "DELETE"
+      + disable_on_destroy = false
+      + id                 = (known after apply)
+      + project            = "yes"
+      + service            = "logging.googleapis.com"
+    }
+
+  # google_project_service.monitoring will be created
+  + resource "google_project_service" "monitoring" {
+      + deletion_policy    = "DELETE"
+      + disable_on_destroy = false
+      + id                 = (known after apply)
+      + project            = "yes"
+      + service            = "monitoring.googleapis.com"
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.

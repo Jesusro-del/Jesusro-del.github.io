@@ -1,0 +1,15 @@
+var.project
+  The name of the project in which to create the Kubernetes cluster.
+
+  Enter a value: 
+var.zone
+  The zone in which to create the Kubernetes cluster. Must match the region
+
+  Enter a value: 
+
+No changes. No objects need to be destroyed.
+
+Either you have not created any objects yet or the existing objects were
+already deleted outside of Terraform.
+
+Destroy complete! Resources: 0 destroyed.

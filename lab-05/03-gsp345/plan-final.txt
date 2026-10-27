@@ -1,0 +1,12 @@
+module.storage.google_storage_bucket.storage-bucket: Refreshing state... [id=tf-bucket-471675]
+google_compute_firewall.tf-firewall: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/global/firewalls/tf-firewall]
+module.instances.google_compute_instance.tf-instance-2: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/zones/us-west4-c/instances/tf-instance-2]
+module.instances.google_compute_instance.tf-instance-1: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/zones/us-west4-c/instances/tf-instance-1]
+module.vpc.module.vpc.google_compute_network.network: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/global/networks/tf-vpc-283221]
+module.vpc.module.subnets.google_compute_subnetwork.subnetwork["us-west4/subnet-02"]: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/regions/us-west4/subnetworks/subnet-02]
+module.vpc.module.subnets.google_compute_subnetwork.subnetwork["us-west4/subnet-01"]: Refreshing state... [id=projects/qwiklabs-gcp-03-e91df05baf52/regions/us-west4/subnetworks/subnet-01]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
